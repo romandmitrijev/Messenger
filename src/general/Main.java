@@ -1,6 +1,8 @@
-import messages.Message;
-import users.Account;
-import users.User;
+package general;
+
+import general.messages.Message;
+import general.users.User;
+
 
 import java.io.*;
 import java.nio.file.Files;
@@ -8,14 +10,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static general.users.Account.*;
 import static java.nio.file.StandardOpenOption.APPEND;
 
 public class Main {
-    private static Path usersFile = Paths.get("C:\\Git\\Messenger\\src\\users\\users.txt");
 
+    public static final Path usersFile = Paths.get("src/general/users/users.txt");
 
     public static void main(String[] args) throws IOException {
-        Account account = new Account();
         Scanner scanner = new Scanner(System.in);
         User user = new User();
         Message message = new Message();
@@ -34,7 +36,7 @@ public class Main {
                 System.out.println("Please enter your name:");
                 while (true) {
                     userName = scanner.nextLine();
-                    if (!account.isTaken(userName)) {
+                    if (!isTaken(userName)) {
                         user.setName(userName);
                         break;
                     }
@@ -42,7 +44,7 @@ public class Main {
                 System.out.println("Please enter your password:");
                 user.setPassword(scanner.nextLine());
                 Files.write(usersFile, (user.getName() + "," + user.getPassword() + "\n").getBytes(), APPEND);
-                System.out.println("users.Account created.");
+                System.out.println("Account created.");
                 user.setLoggedIn(true);
 
                 // 2 - LogIn
@@ -50,11 +52,11 @@ public class Main {
                 while (!user.isLoggedIn()) {
                     System.out.println("Please enter your name");
                     userName = scanner.nextLine();
-                    if (account.accountListReader().containsKey(userName)) {
+                    if (allUsers().containsKey(userName)) {
                         while (!user.isLoggedIn()) {
                             System.out.println("Please enter your password");
                             userPassword = scanner.nextLine();
-                            if (account.isCorrect(userName, userPassword)) {
+                            if (isCorrect(userName, userPassword)) {
                                 user.setName(userName);
                                 user.setLoggedIn(true);
                                 System.out.println("Welcome " + user.getName() + "!");
@@ -68,29 +70,38 @@ public class Main {
                 System.out.println("Only commands: 1 and 2 are allowed.");
             }
         }
-        // Read / Write message / LogOut part
+        // Write message / Read message / LogOut part
         while (user.isLoggedIn()) {
+            new Thread(user).start();
+
             System.out.println("What do you want to do: 1-Write a message, 2-Read incoming messages, 3-LogOut");
             userDecision = scanner.nextInt();
             scanner.nextLine();
+
             // 1 - Write a message
             if (userDecision == 1) {
                 while (true) {
                     System.out.println("Please enter Recipient name: ");
                     String recipientName = scanner.nextLine();
-                    if (account.accountListReader().containsKey(recipientName)) {
+                    if (allUsers().containsKey(recipientName)) {
                         System.out.println("Please enter your message:");
                         message.setContent(scanner.nextLine());
                         message.setRecipient(recipientName);
-                        if (Files.exists(Paths.get(message.getRecipient() + ".txt"))) {
-                            Files.write(Paths.get(message.getRecipient() + ".txt"), (message.getContent() + "\n").getBytes(), APPEND);
-                            System.out.println("Message sent.");
-                        } else {
-                            Files.createFile(Paths.get(message.getRecipient() + ".txt"));
-                            Files.write(Paths.get(message.getRecipient() + ".txt"), ("1" + "\n").getBytes());
-                            Files.write(Paths.get(message.getRecipient() + ".txt"), (message.getContent() + "\n").getBytes(), APPEND);
-                            System.out.println("Message sent.");
+                        String fileName = message.getRecipient() + ".txt";
+
+                        if (!Files.exists(Paths.get(fileName))) {
+                            Files.createFile(Paths.get(fileName));
+                            Files.write(Paths.get(fileName), ("2" + "\n" +"0" + "\n").getBytes());
                         }
+
+                        Files.write(Paths.get(fileName), (user.getName() + " wrote: " + "\n" + message.getContent() +
+                                "\n").getBytes(), APPEND);
+                        System.out.println("Message sent.");
+
+                        //part where new message mark is added for new message thread.
+                        List<String> messageLines = Files.readAllLines(Paths.get(fileName));
+                        messageLines.set(1, String.valueOf(1));
+                        Files.write(Paths.get(fileName), messageLines);
                         break;
                     } else {
                         System.out.println("There is no such recipient in the UserMap");
@@ -103,38 +114,55 @@ public class Main {
                     System.out.println("What would you like to read: 1 - New messages, 2 - All messages, 3 - Back");
                     userDecision = scanner.nextInt();
                     scanner.nextLine();
-                    if (userDecision == 1 && Files.exists(Paths.get(user.getName() + ".txt"))) {
-                        List<String> messageLines = Files.readAllLines(Paths.get(user.getName() + ".txt"));
+                    String fileName = user.getName() + ".txt";
+                    boolean exists = Files.exists(Paths.get(fileName));
+
+                    if (!exists) {
+                        System.out.println("There is no messages for you.");
+                        break;
+                    }
+                    // New messages
+                    if (userDecision == 1) {
+                        List<String> messageLines = Files.readAllLines(Paths.get(fileName));
                         int readMessages = Integer.parseInt(messageLines.get(0));
                         messageLines.set(0, String.valueOf(messageLines.size()));
-                        System.out.println("--------------------------------------");
-                            for (int i = readMessages; i<messageLines.size(); i++ ){
-                                System.out.println(messageLines.get(i));
-                            }
-                        System.out.println("--------------------------------------");
-                            Files.write(Paths.get(user.getName() + ".txt"), messageLines);
 
-                    } else if (userDecision == 2 && Files.exists(Paths.get(user.getName() + ".txt"))) {
-                        List<String> messageLines = Files.readAllLines(Paths.get(user.getName() + ".txt"));
                         System.out.println("--------------------------------------");
-                        for (int i = 1; i< messageLines.size(); i++) {
+                        for (int i = readMessages; i < messageLines.size(); i++) {
+                            System.out.println(messageLines.get(i));
+                        }
+
+                        System.out.println("--------------------------------------");
+                        Files.write(Paths.get(fileName), messageLines);
+                        break;
+
+                        // All messages
+                    } else if (userDecision == 2) {
+                        List<String> messageLines = Files.readAllLines(Paths.get(fileName));
+                        System.out.println("--------------------------------------");
+                        for (int i = 2; i < messageLines.size(); i++) {
                             System.out.println(messageLines.get(i));
                         }
                         System.out.println("--------------------------------------");
-                    } else if (userDecision == 3){
                         break;
-                    }else {
-                        System.out.println("There is no messages for you.");
+                    } else if (userDecision == 3) {
+                        break;
+                    } else {
+                        System.out.println("Only Commands 1-3 are allowed");
                     }
                 }
             }
             // 3 - LogOut
-            else {
+            else if (userDecision == 3) {
                 System.out.println("See you next time!");
                 user.setLoggedIn(false);
             }
-        }
+            // none above
+            else {
+                System.out.println("Only Commands 1-3 are allowed");
+            }
 
+        }
 
     }
 }

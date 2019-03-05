@@ -1,17 +1,17 @@
-package users;
+package general.users;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static general.Main.usersFile;
+
 public class Account {
 
-     public Map<String, String> accountListReader() throws IOException {
-        Path usersFile = Paths.get("C:\\Git\\Messenger\\src\\users\\users.txt");
+     public static Map<String, String> allUsers() throws IOException {
+
         List<String> fileLines = Files.readAllLines(usersFile);
         Map<String, String> userMap = new HashMap<>();
 
@@ -22,22 +22,23 @@ public class Account {
         return userMap;
     }
 
-    public boolean isCorrect(String name, String password) throws IOException {
-        if (!accountListReader().containsKey(name)) {
+    public static boolean isCorrect(String name, String password) throws IOException {
+        Map<String, String> users = allUsers();
+        if (!users.containsKey(name)) {
             System.out.println("name does not exist in the list");
             return false;
-        } else if (!accountListReader().get(name).equals(password)){
+        } else if (!users.get(name).equals(password)){
             System.out.println("Password is wrong.");
             return false;
         }return true ;
     }
 
-    public boolean isLoggedIn(String name, String password) throws IOException {
+    public static boolean isLoggedIn(String name, String password) throws IOException {
         return isCorrect(name, password);
     }
 
-    public boolean isTaken(String name) throws IOException {
-        if (accountListReader().containsKey(name)){
+    public static boolean isTaken(String name) throws IOException {
+        if (allUsers().containsKey(name)){
             System.out.println("This name is already taken");
             return true;
         }return false;

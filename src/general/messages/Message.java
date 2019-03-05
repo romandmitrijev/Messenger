@@ -1,4 +1,4 @@
-package messages;
+package general.messages;
 
 public class Message {
     private String recipient;
