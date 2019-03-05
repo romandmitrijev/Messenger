@@ -14,7 +14,6 @@ import static general.users.Account.*;
 import static java.nio.file.StandardOpenOption.APPEND;
 
 public class Main {
-
     public static final Path usersFile = Paths.get("src/general/users/users.txt");
 
     public static void main(String[] args) throws IOException {
@@ -120,16 +119,10 @@ public class Main {
                 while (true) {
                     System.out.println("What would you like to read: 1 - NEW messages, 2 - ALL messages, 3 - BACK");
                     userDecision = scanner.nextLine();
-                    String fileName = user.getName() + ".txt";
-                    boolean exists = Files.exists(Paths.get(fileName));
 
-                    if (!exists) {
-                        System.out.println("There is no messages for you.");
-                        break;
-                    }
                     // New messages
                     if (userDecision.equals("1") || userDecision.equalsIgnoreCase("new")) {
-                        List<String> messageLines = Files.readAllLines(Paths.get(fileName));
+                        List<String> messageLines = Files.readAllLines(Paths.get(user.getFileName()));
                         int readMessages = Integer.parseInt(messageLines.get(0));
                         if (readMessages == messageLines.size()) {
                             System.out.println("--------------------------------------" + "\n"
@@ -144,12 +137,12 @@ public class Main {
                             }
 
                             System.out.println("--------------------------------------");
-                            Files.write(Paths.get(fileName), messageLines);
+                            Files.write(Paths.get(user.getFileName()), messageLines);
                             break;
                         }
                         // All messages
                     } else if (userDecision.equals("2") || userDecision.equalsIgnoreCase("all")) {
-                        List<String> messageLines = Files.readAllLines(Paths.get(fileName));
+                        List<String> messageLines = Files.readAllLines(Paths.get(user.getFileName()));
                         messageLines.set(0, String.valueOf(messageLines.size()));
 
                         System.out.println("--------------------------------------");
@@ -158,7 +151,7 @@ public class Main {
                         }
                         System.out.println("--------------------------------------");
 
-                        Files.write(Paths.get(fileName), messageLines);
+                        Files.write(Paths.get(user.getFileName()), messageLines);
                         break;
                     } else if (userDecision.equals("3") || userDecision.equalsIgnoreCase("back")) {
                         break;
@@ -176,8 +169,6 @@ public class Main {
             else {
                 System.out.println("No such command");
             }
-
         }
-
     }
 }
