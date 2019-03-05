@@ -9,6 +9,7 @@ public class User implements Runnable {
     private String name;
     private String password;
     private boolean isLoggedIn;
+    private String fileName;
 
 
     public String getName() {
@@ -33,6 +34,14 @@ public class User implements Runnable {
 
     public void setLoggedIn(boolean loggedIn) {
         isLoggedIn = loggedIn;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     @Override
